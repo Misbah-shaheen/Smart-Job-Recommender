@@ -58,8 +58,8 @@ The system is divided into three layers that work together:
 ```
 ┌─────────────────────────────────────────────────────┐
 │                Flutter Mobile App                   │
-│  Auth · Job Search · Recommendations · Skill Gap   │
-│  Trending Skills · Career Insights · AI Chatbot    │
+│  Auth · Job Search · Recommendations · Skill Gap    │
+│  Trending Skills · Career Insights · AI Chatbot     │
 └──────────────┬────────────────────┬─────────────────┘
                │  HTTP (REST)       │  Firebase SDK
                ▼                   ▼
