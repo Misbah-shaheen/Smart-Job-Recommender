@@ -1,298 +1,329 @@
-<<<<<<< HEAD
-# Smart Job Recommender — Full Setup & Run Guide
+# Smart Job Recommender System
 
-## Tech Stack
-| Layer | Technology |
-|-------|-----------|
-| Mobile App | Flutter + Dart |
-| State Management | Provider |
-| Authentication | Firebase Auth |
-| Database | Cloud Firestore |
-| ML Backend | Python Flask + TF-IDF + Cosine Similarity |
-| Dataset | Kaggle Job Description Dataset → preprocessed to JSON |
+A full-stack AI-powered mobile application that matches users to relevant job opportunities based on their skills, identifies skill gaps for target roles, and provides an AI career coaching chatbot — built with Flutter and a Python ML backend.
+
+>  Flutter · Python · Firebase · Gemini AI
 
 ---
 
-## Project Structure
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [System Architecture](#system-architecture)
+- [Folder Structure](#folder-structure)
+- [Installation Guide](#installation-guide)
+- [API Reference](#api-reference)
+- [Screenshots](#screenshots)
+- [Future Improvements](#future-improvements)
+- [Author](#author)
+
+---
+
+## Features
+
+- **ML-Powered Job Recommendations** — TF-IDF vectorisation with cosine similarity matches users to the most relevant jobs based on their skill set
+- **Skill Gap Analyser** — Compares a user's skills against a target job's requirements; shows matching and missing skills ranked by market demand
+- **Local Weighted Ranking** — Offline scoring system weighing skill overlap, keyword relevance, work type preference, and experience fit
+- **AI Career Chatbot** — Multi-turn conversational assistant powered by Google Gemini 2.0 Flash Lite with a career-focused system prompt
+- **Career Insights Dashboard** — Visual analytics: jobs by work type, top countries/roles, average salary by role, posting trends, experience distribution, top skills
+- **Trending Skills** — Real-time demand map computed from 25,000 job listings bundled in the app
+- **Firebase Authentication** — Secure email/password sign-up and login
+- **User Profile & Skill Management** — Stored in Firestore; skills drive both recommendations and skill gap analysis
+- **Offline-First Design** — All core features fall back to local computation if the Flask server is unreachable
+- **Performance Optimised** — Heavy JSON parsing and scoring run in background isolates via Flutter's `compute()`, keeping the UI thread free
+
+---
+
+##  Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Mobile Frontend | Flutter (Dart), Provider |
+| Authentication | Firebase Auth |
+| Cloud Database | Cloud Firestore |
+| ML Backend | Python, Flask, scikit-learn |
+| NLP / Similarity | TF-IDF Vectoriser, Cosine Similarity |
+| AI Chatbot | Google Gemini 2.0 Flash Lite API |
+| Data Source | Kaggle Job Descriptions Dataset |
+| Preprocessing | Pandas, NumPy |
+| State Management | Provider (ChangeNotifier) |
+
+---
+
+## System Architecture
+
+The system is divided into three layers that work together:
+
 ```
-smart_job_recommender/
+┌─────────────────────────────────────────────────────┐
+│                Flutter Mobile App                   │
+│  Auth · Job Search · Recommendations · Skill Gap   │
+│  Trending Skills · Career Insights · AI Chatbot    │
+└──────────────┬────────────────────┬─────────────────┘
+               │  HTTP (REST)       │  Firebase SDK
+               ▼                   ▼
+┌──────────────────────┐  ┌─────────────────────────┐
+│   Flask ML Backend   │  │   Firebase Cloud        │
+│   /recommend         │  │   Auth · Firestore      │
+│   /skill_gap         │  └─────────────────────────┘
+│   /stats · /job/<id> │
+│   TF-IDF · Cosine    │         ┌──────────────────┐
+│   Similarity         │         │  Gemini 2.0 API  │
+└──────────────────────┘         │  Career Chatbot  │
+                                 └──────────────────┘
+```
+
+**Data flow:**
+1. A one-time preprocessing script cleans the raw Kaggle CSV and produces two JSON files — a 50k-job dataset for Flask's ML engine and a 25k stratified sample bundled into the APK as an offline asset.
+2. Flask loads the full dataset at startup, builds the TF-IDF matrix once in memory, and serves inference via REST endpoints.
+3. The Flutter app calls Flask for ML features and Firebase for auth/profile; all features degrade gracefully to local computation if Flask is offline.
+
+---
+
+## Folder Structure
+
+```
+smart-job-recommender/
+│
+├── backend/
+│   ├── app.py                   # Flask REST API (TF-IDF, endpoints)
+│   ├── preprocess_dataset.py    # Data cleaning & JSON export script
+│   ├── jobs.json                # 50k jobs — used by Flask ML (not committed)
+│   └── jobs_flutter.json        # 25k jobs — bundled into APK (not committed)
+│
 ├── lib/
-│   ├── main.dart                  ← App entry, Firebase init, Provider setup
+│   ├── main.dart                # App entry point, Firebase init, routing
+│   ├── firebase_options.dart    # Auto-generated Firebase config
+│   │
 │   ├── models/
-│   │   ├── job_model.dart         ← Job data class
-│   │   └── user_profile_model.dart← User profile data class
+│   │   ├── job_model.dart       # Job data model with fromJson / copyWithMatch
+│   │   └── user_profile_model.dart
+│   │
 │   ├── services/
-│   │   ├── auth_service.dart      ← Firebase Auth wrapper
-│   │   ├── profile_service.dart   ← Firestore read/write
-│   │   ├── job_service.dart       ← JSON loader + Flask API caller
-│   │   └── app_provider.dart      ← Central state (ChangeNotifier)
+│   │   ├── app_provider.dart    # Global ChangeNotifier — state, auth, lazy load
+│   │   ├── job_service.dart     # Load, filter, rank, Flask calls, skill gap
+│   │   ├── auth_service.dart    # Firebase Auth wrapper
+│   │   └── profile_service.dart # Firestore profile CRUD
+│   │
 │   ├── screens/
+│   │   ├── home_screen.dart
 │   │   ├── login_screen.dart
 │   │   ├── signup_screen.dart
-│   │   ├── home_screen.dart       ← Bottom navigation shell
-│   │   ├── job_search_screen.dart ← Search + Filters (local JSON)
-│   │   ├── recommendation_screen.dart ← ML recommendations (Flask)
-│   │   ├── skill_gap_screen.dart  ← Skill gap analyzer
-│   │   └── profile_screen.dart    ← Profile management
+│   │   ├── job_search_screen.dart
+│   │   ├── recommendation_screen.dart
+│   │   ├── skill_gap_screen.dart
+│   │   ├── trending_skills_screen.dart
+│   │   ├── career_insights_screen.dart
+│   │   ├── notifications_screen.dart
+│   │   ├── profile_screen.dart
+│   │   ├── settings_screen.dart
+│   │   └── chatbot_screen.dart
+│   │
 │   ├── widgets/
 │   │   ├── job_card.dart
 │   │   └── filter_bottom_sheet.dart
+│   │
 │   └── utils/
-│       ├── app_constants.dart     ← Flask URL, asset paths
-│       └── app_theme.dart         ← Material 3 theme
-├── assets/
-│   └── data/
-│       └── jobs.json              ← Pre-processed dataset (Flutter loads this)
-├── backend/
-│   ├── preprocess_dataset.py      ← Kaggle CSV → jobs.json
-│   └── app.py                     ← Flask ML API
-└── pubspec.yaml
+│       ├── app_constants.dart   # API URLs, keys, asset paths
+│       └── app_theme.dart
+│
+└── assets/
+    └── data/
+        └── jobs.json            # 25k-job Flutter asset (copy of jobs_flutter.json)
 ```
 
 ---
 
-## Why Flutter can't use Kaggle CSV directly
+## Installation Guide
 
-```
-Kaggle CSV (raw data)
-       │
-       ▼  Python (preprocess_dataset.py)
-       │  • Remove nulls
-       │  • Lowercase skills
-       │  • Normalize salary/experience
-       │  • Select 6 key columns
-       │
-       ├──► jobs.json ──► Flutter assets/ ──► Job Search & Filters (offline)
-       │
-       └──► Same data served via Flask ──► /recommend (TF-IDF + Cosine Similarity)
-```
+### Prerequisites
 
-Flutter is a mobile runtime — it has no pandas, no numpy, no Python.
-The preprocessing script converts the CSV to typed JSON once.
-Flutter loads it instantly from the APK bundle using `rootBundle.loadString()`.
+| Tool | Version |
+|---|---|
+| Flutter SDK | ≥ 3.x |
+| Dart | ≥ 3.x |
+| Python | ≥ 3.9 |
+| Firebase CLI | Latest |
+| Android Studio / Xcode | Latest |
 
 ---
 
-## PART 1 — Firebase Setup
+### 1. Clone the repository
 
-### Step 1: Create Firebase Project
-1. Go to https://console.firebase.google.com
-2. Click **Add project** → name it `smart-job-recommender`
-3. Disable Google Analytics (optional) → Create project
-
-### Step 2: Enable Authentication
-1. In Firebase Console → **Authentication** → **Get started**
-2. Click **Sign-in method** → Enable **Email/Password** → Save
-
-### Step 3: Enable Firestore
-1. Firebase Console → **Firestore Database** → **Create database**
-2. Choose **Start in test mode** → Select your region → Done
-
-### Step 4: Add Android App
-1. Firebase Console → Project Overview → **Add app** → Android icon
-2. Package name: `com.example.smart_job_recommender`
-3. Download `google-services.json`
-4. Place it in: `android/app/google-services.json`
-
-### Step 5: Configure Android build files
-
-**android/build.gradle** — add inside `buildscript > dependencies`:
-```gradle
-classpath 'com.google.gms:google-services:4.4.0'
-```
-
-**android/app/build.gradle** — add at bottom:
-```gradle
-apply plugin: 'com.google.gms.google-services'
-```
-
-Also ensure `minSdkVersion 21` (or higher) in `android/app/build.gradle`.
-
-### Step 6: FlutterFire CLI (generates firebase_options.dart)
 ```bash
-# Install FlutterFire CLI
-dart pub global activate flutterfire_cli
-
-# From your Flutter project root:
-firebase login
-flutterfire configure
-# Select your project, tick Android (and iOS if needed)
-# This auto-generates lib/firebase_options.dart
-```
-
-Then update `main.dart`:
-```dart
-await Firebase.initializeApp(
-  options: DefaultFirebaseOptions.currentPlatform,
-);
+git clone https://github.com/your-username/smart-job-recommender.git
+cd smart-job-recommender
 ```
 
 ---
 
-## PART 2 — Python Backend Setup
+### 2. Set up Firebase
 
-### Step 1: Install dependencies
+1. Create a project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable **Email/Password** authentication
+3. Create a **Firestore** database (start in test mode)
+4. Run `flutterfire configure` to generate `firebase_options.dart`
+5. Place `google-services.json` in `android/app/` and `GoogleService-Info.plist` in `ios/Runner/`
+
+---
+
+### 3. Set up the Python backend
+
 ```bash
-cd backend/
-pip install flask flask-cors scikit-learn pandas
-```
+cd backend
 
-### Step 2: (Optional) Download real Kaggle dataset
-- Visit: https://www.kaggle.com/datasets/ravindrasinghrana/job-description-dataset
-- Download CSV → rename to `job_descriptions.csv`
-- Place in `backend/` folder
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate        # macOS/Linux
+venv\Scripts\activate           # Windows
 
-### Step 3: Preprocess dataset → generate jobs.json
-```bash
+# Install dependencies
+pip install flask flask-cors scikit-learn numpy pandas
+
+# Download the Kaggle dataset
+# https://www.kaggle.com/datasets/ravindrasinghrana/job-description-dataset
+# Place job_descriptions.csv in backend/
+
+# Generate JSON files
 python preprocess_dataset.py
-```
-Output: `jobs.json` (25 sample jobs, or your real Kaggle data)
+# Without the CSV, a 100-job sample is generated automatically
 
-### Step 4: Copy jobs.json to Flutter assets
-```bash
-cp jobs.json ../assets/data/jobs.json
-```
+# Copy Flutter asset
+cp jobs_flutter.json ../assets/data/jobs.json
 
-### Step 5: Start Flask server
-```bash
+# Start the Flask server
 python app.py
 ```
-You should see:
-```
-✅ TF-IDF matrix built: 25 jobs × 312 features
- * Running on http://0.0.0.0:5000
-```
 
-### Step 6: Test endpoints manually
-```bash
-# Health check
-curl http://localhost:5000/health
+The API will be available at `http://localhost:5000`.
 
-# Recommendations
-curl -X POST http://localhost:5000/recommend \
-  -H "Content-Type: application/json" \
-  -d '{"skills": ["flutter", "dart", "firebase"]}'
-
-# Skill gap
-curl -X POST http://localhost:5000/skill_gap \
-  -H "Content-Type: application/json" \
-  -d '{"user_skills": ["flutter", "dart"], "job_id": 1}'
-```
+> **Android Emulator Note:** The emulator maps `10.0.2.2` to your machine's localhost. The app is pre-configured to use this address.
 
 ---
 
-## PART 3 — Flutter App Setup & Run
+### 4. Configure API keys
 
-### Step 1: Install Flutter packages
-```bash
-flutter pub get
-```
-
-### Step 2: Configure Flask URL (IMPORTANT)
-Open `lib/utils/app_constants.dart`:
+Open `lib/utils/app_constants.dart` and set your Gemini API key:
 
 ```dart
-// For Android EMULATOR (emulator treats 10.0.2.2 as your PC's localhost):
-static const String flaskBaseUrl = 'http://10.0.2.2:5000';
-
-// For PHYSICAL DEVICE on same WiFi:
-// Find your PC's local IP: run `ipconfig` (Windows) or `ifconfig` (Mac/Linux)
-// static const String flaskBaseUrl = 'http://192.168.1.XXX:5000';
+static const String geminiApiKey = 'YOUR_GEMINI_API_KEY_HERE';
 ```
 
-### Step 3: Run in Android Studio
-1. Open Android Studio → Open the `smart_job_recommender` folder
-2. Wait for Gradle sync to finish
-3. Open AVD Manager → Start an Android emulator (API 30+)
-   OR plug in a physical Android device with USB debugging ON
-4. Click the **Run ▶** button (or press `Shift+F10`)
+Get a free key at [aistudio.google.com](https://aistudio.google.com/app/apikey).
 
-### Step 4: Run from terminal
+---
+
+### 5. Run the Flutter app
+
 ```bash
-flutter devices          # lists available devices
-flutter run              # runs on connected device/emulator
-flutter run --release    # production build (faster)
+# Install Flutter dependencies
+flutter pub get
+
+# Run on a connected device or emulator
+flutter run
 ```
 
 ---
 
-## PART 4 — Android permissions (for network)
+## API Reference
 
-Ensure `android/app/src/main/AndroidManifest.xml` has:
-```xml
-<uses-permission android:name="android.permission.INTERNET"/>
+Base URL: `http://10.0.2.2:5000` (emulator) or your machine's local IP for a physical device.
+
+### `POST /recommend`
+
+Returns top-N job recommendations based on cosine similarity with the user's skills.
+
+**Request body:**
+```json
+{
+  "skills": ["Python", "Flask", "PostgreSQL"],
+  "top_n": 5,
+  "work_type": "Remote",
+  "min_salary": 80000,
+  "max_experience": 5
+}
 ```
-It's usually there by default. Also for HTTP (not HTTPS) on Android 9+, add inside `<application>`:
-```xml
-android:usesCleartextTraffic="true"
-```
 
----
-
-## PART 5 — How ML Recommendations Work
-
-```
-User Profile (skills: ["flutter", "dart", "firebase"])
-        │
-        ▼  HTTP POST /recommend  (job_service.dart)
-Flask Backend (app.py)
-        │
-        ├─ TF-IDF Vectorizer fitted on all 25 job descriptions + skills
-        │   Each job becomes a vector of word importance weights
-        │
-        ├─ User skills → transformed into same TF-IDF vector space
-        │
-        ├─ Cosine Similarity computed between user vector & all job vectors
-        │   similarity = (A · B) / (|A| × |B|)  → range [0, 1]
-        │
-        └─ Top-5 jobs sorted by similarity → returned with match_percentage
-        │
-        ▼  Flutter parses JSON → displays in recommendation_screen.dart
+**Response:**
+```json
+{
+  "recommendations": [ { "id": 1, "job_title": "...", "match_percentage": 87.3, "..." : "..." } ],
+  "total_matched": 5
+}
 ```
 
 ---
 
-## PART 6 — Firestore Data Structure
+### `POST /skill_gap`
 
+Compares user skills against a specific job's requirements.
+
+**Request body:**
+```json
+{
+  "user_skills": ["Python", "Flask"],
+  "job_id": 42
+}
 ```
-users/                          (collection)
-  └── {uid}/                    (document = user's Firebase UID)
-        name: "Ahmed Khan"
-        email: "ahmed@gmail.com"
-        skills: ["flutter", "dart", "firebase"]
-        experience: 2
-        preferred_role: "Flutter Developer"
+
+**Response:**
+```json
+{
+  "job_title": "Backend Engineer",
+  "matching_skills": ["Python", "Flask"],
+  "missing_skills": ["Docker", "Kubernetes"],
+  "match_percentage": 50.0
+}
 ```
 
 ---
 
-## Common Issues & Fixes
+### `GET /stats`
 
-| Problem | Fix |
-|---------|-----|
-| `google-services.json not found` | Place it in `android/app/` not project root |
-| `Connection refused` on emulator | Use `10.0.2.2:5000` not `localhost:5000` |
-| `Connection refused` on real device | Use your PC's LAN IP (e.g. `192.168.1.5:5000`) |
-| `Cleartext HTTP not permitted` | Add `android:usesCleartextTraffic="true"` to AndroidManifest |
-| `minSdkVersion` error | Set `minSdkVersion 21` in android/app/build.gradle |
-| `firebase_options.dart missing` | Run `flutterfire configure` |
-| Flask `jobs.json not found` | Run `python preprocess_dataset.py` first |
-| Skill gap shows empty | Make sure Flask is running; app falls back to local compute |
+Returns aggregated analytics for the career insights dashboard.
+
+**Response fields:** `total_jobs`, `jobs_by_work_type`, `jobs_by_country`, `jobs_by_role`, `avg_salary_by_role`, `jobs_posted_by_month`, `experience_distribution`, `top_skills`
 
 ---
 
-## Running Everything Together (Checklist)
+### `GET /job/<id>`
 
-```
-[ ] 1. Firebase project created + google-services.json in android/app/
-[ ] 2. flutterfire configure run → firebase_options.dart generated
-[ ] 3. cd backend && python preprocess_dataset.py  → jobs.json created
-[ ] 4. cp backend/jobs.json assets/data/jobs.json
-[ ] 5. python backend/app.py  → Flask running on :5000
-[ ] 6. flutter pub get
-[ ] 7. flutter run  (emulator or device)
-[ ] 8. Sign up → add skills in Profile → tap "For You" tab for ML recommendations
-```
-=======
-# Smart-Job-Recommender
->>>>>>> ea80108f37d112b8384cde3315939a540dde77ca
+Returns the full job record including description, responsibilities, benefits, and company profile.
+
+---
+
+### `GET /health`
+
+Returns server status, number of jobs loaded, and TF-IDF feature count.
+
+---
+
+
+
+##  Future Improvements
+
+- [ ] **Resume parser** — extract skills automatically from an uploaded PDF CV
+- [ ] **Push notifications** — alert users when new jobs matching their profile are posted
+- [ ] **Job bookmarking** — save and manage favourite listings with Firestore
+- [ ] **Advanced filters** — filter by country, company size, salary currency
+- [ ] **Model upgrade** — replace TF-IDF with a sentence-transformer embedding model (e.g. `all-MiniLM-L6-v2`) for semantic similarity
+- [ ] **Deployed backend** — host Flask on Railway, Render, or AWS so the app works without a local server
+- [ ] **Multi-language support** — internationalisation for a global user base
+- [ ] **Apply integration** — deep-link directly to job application pages
+
+---
+
+
+
+## Contributors
+
+- **Misbah Shaheen** 
+- **Hareem Fatima**
+  GitHub: [HareemFatima5](https://github.com/HareemFatima5)
+
+---
+
+## License
+
+This project is for academic purposes. All rights reserved © 2026.
