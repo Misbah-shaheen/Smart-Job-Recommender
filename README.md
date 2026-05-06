@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Smart Job Recommender — Full Setup & Run Guide
 
 ## Tech Stack
@@ -292,3 +293,6 @@ users/                          (collection)
 [ ] 7. flutter run  (emulator or device)
 [ ] 8. Sign up → add skills in Profile → tap "For You" tab for ML recommendations
 ```
+=======
+# Smart-Job-Recommender
+>>>>>>> ea80108f37d112b8384cde3315939a540dde77ca
