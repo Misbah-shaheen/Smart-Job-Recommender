@@ -1,0 +1,38 @@
+# Flutter
+.dart_tool/
+build/
+.packages
+.pub/
+
+# Logs
+*.log
+firebase-debug.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Android
+android/.gradle/
+android/local.properties
+*.keystore
+*.jks
+
+# iOS/macOS
+ios/Pods/
+macos/Flutter/ephemeral/
+
+# Windows/Linux
+windows/flutter/ephemeral/
+linux/flutter/ephemeral/
+
+# Generated
+**/generated_plugin_registrant.*
+
+# Firebase
+google-services.json
+firebase.json
+
+# Zip
+*.zip
