@@ -302,12 +302,12 @@ Returns server status, number of jobs loaded, and TF-IDF feature count.
  
 | Screen | Preview |
 |---|---|
-| Login | ![Login Screen](screenshots/login.png) |
-| Job Search | ![Job Search](screenshots/job_search.png) |
-| ML Recommendations | ![Recommendations](screenshots/recommendations.png) |
-| Skill Gap Analyser | ![Skill Gap](screenshots/skill_gap.png) |
-| Career Insights | ![Insights](screenshots/career_insights.png) |
-| AI Chatbot | ![Chatbot](screenshots/chatbot.png) |
+| Login | ![Login Screen](screenshots/login.jpg) |
+| Job Search | ![Job Search](screenshots/job_search.jpg) |
+| ML Recommendations | ![Recommendations](screenshots/recommendations.jpg) |
+| Skill Gap Analyser | ![Skill Gap](screenshots/skill_gap.jpg) |
+| Career Insights | ![Insights](screenshots/career_insights.jpg) |
+| AI Chatbot | ![Chatbot](screenshots/chatbot.jpg) |
 
 ---
 ##  Future Improvements
