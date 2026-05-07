@@ -313,7 +313,10 @@ Returns server status, number of jobs loaded, and TF-IDF feature count.
   <img src="screenshots/career_insights.jpg" width="220" height="430"/>
   <img src="screenshots/chatbot.jpg" width="220" height="430"/>
 </p>
+
 ---
+
+
 ##  Future Improvements
 
 - [ ] **Resume parser** — extract skills automatically from an uploaded PDF CV
