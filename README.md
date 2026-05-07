@@ -303,15 +303,15 @@ Returns server status, number of jobs loaded, and TF-IDF feature count.
 ## Screenshots
 
 <p align="center">
-  <img src="screenshots/login.jpg" width="220" height="450"/>
-  <img src="screenshots/job_search.jpg" width="220" height="450"/>
-  <img src="screenshots/recommendations.jpg" width="220" height="450"/>
+  <img src="screenshots/login.jpg" width="220" height="430"/>
+  <img src="screenshots/job_search.jpg" width="220" height="430"/>
+  <img src="screenshots/recommendations.jpg" width="220" height="430"/>
 </p>
 
 <p align="center">
-  <img src="screenshots/skill_gap.jpg" width="220" height="450"/>
-  <img src="screenshots/career_insights.jpg" width="220" height="450"/>
-  <img src="screenshots/chatbot.jpg" width="220" height="450"/>
+  <img src="screenshots/skill_gap.jpg" width="220" height="430"/>
+  <img src="screenshots/career_insights.jpg" width="220" height="430"/>
+  <img src="screenshots/chatbot.jpg" width="220" height="430"/>
 </p>
 ---
 ##  Future Improvements
