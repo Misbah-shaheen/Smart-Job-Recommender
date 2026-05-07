@@ -299,15 +299,18 @@ Returns server status, number of jobs loaded, and TF-IDF feature count.
 
 ---
 ## Screenshots
- 
-| Screen | Preview |
-|---|---|
-| Login | ![Login Screen](screenshots/login.jpg) |
-| Job Search | ![Job Search](screenshots/job_search.jpg) |
-| ML Recommendations | ![Recommendations](screenshots/recommendations.jpg) |
-| Skill Gap Analyser | ![Skill Gap](screenshots/skill_gap.jpg) |
-| Career Insights | ![Insights](screenshots/career_insights.jpg) |
-| AI Chatbot | ![Chatbot](screenshots/chatbot.jpg) |
+
+<p align="center">
+  <img src="screenshots/login.jpg" width="220"/>
+  <img src="screenshots/job_search.jpg" width="220"/>
+  <img src="screenshots/recommendations.jpg" width="220"/>
+</p>
+
+<p align="center">
+  <img src="screenshots/skill_gap.jpg" width="220"/>
+  <img src="screenshots/career_insights.jpg" width="220"/>
+  <img src="screenshots/chatbot.jpg" width="220"/>
+</p>
 
 ---
 ##  Future Improvements
